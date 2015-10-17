@@ -14,37 +14,54 @@ var scores = process.argv[2] || null,
         return score === '-';
     },
 
+    createCalculator = function (scores) {
+        return function (score, index) {
+            switch (true) {
+                case isStrike(score):
+                    return 10 + getStrikeBonus(scores, index);
+
+                case isSpare(score):
+                    return 10 + getSpareBonus(scores, index);
+            }
+
+            return score;
+        };
+    },
+
     getSpareBonus = function (scores, index) {
 
     },
 
     getStrikeBonus = function (scores, index) {
+        var calc = createCalculator(scores);
 
-    },
-
-    calculateScore = function (score) {
-        switch (true) {
-            case isNull(score):
-                return 0;
-
-            case isStrike(score):
-                return 10;
-
-            case isSpare(score):
-                return 5;
-        }
-
-        return parseInt(score, 10);
+        return calc(scores[index + 1], index + 1) + calc(scores[index + 2], index + 2);
     },
 
     toScoreTotal = function (previousScore, currentScore) {
         return previousScore + currentScore;
     },
 
+    toIntegerIfPossible = function (score) {
+        var parsedInt;
+
+        // empty scores '-' are worth 0 and have no need for any special behaviour.
+        if (isNull(score)) {
+            score = 0;
+
+        } else {
+            score = parseInt(score, 10);
+        }
+
+        return isNaN(parsedInt) ? score : parsedInt;
+    },
+
     calculateScores = function (scores) {
-        var scoreParts = scores.split('');
+        var scoreParts = scores.split(''),
+            calculateScore = createCalculator(scores);
 
         return scoreParts
+            .map(toIntegerIfPossible)
             .map(calculateScore)
             .reduce(toScoreTotal, 0);
     };
