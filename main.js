@@ -1,6 +1,12 @@
 #! /usr/bin/env node
 
+'use strict';
+
 var scores = process.argv[2] || null,
+
+    isLastShot = function (shotNumber) {
+        return shotNumber >= 10;
+    },
 
     isStrike = function (score) {
         return score === 'X';
@@ -14,28 +20,39 @@ var scores = process.argv[2] || null,
         return score === '-';
     },
 
-    createCalculator = function (scores) {
-        return function (score, index) {
-            switch (true) {
-                case isStrike(score):
-                    return 10 + getStrikeBonus(scores, index);
+    getBonus = function (score, scoreNumbers, index) {
+        var i,
+            bonus = 0,
+            iterations = isStrike(score) ? 2 : 1;
 
-                case isSpare(score):
-                    return 10 + getSpareBonus(scores, index);
+        if (isLastShot(index + 1)) {
+            return bonus;
+        }
+
+        for (i = 1; i <= iterations; i += 1) {
+            if (!scoreNumbers[index + i]) {
+                break;
+            }
+
+            if (isStrike(scoreNumbers[index + i]) || isSpare(scoreNumbers[index + i])) {
+                bonus += 10;
+
+            } else {
+                bonus += scoreNumbers[index + i];
+            }
+        }
+
+        return bonus;
+    },
+
+    createCalculator = function (scores) {
+        return function calculateScore(score, index) {
+            if (isStrike(score) || isSpare(score)) {
+                return 10 + getBonus(score, scores, index);
             }
 
             return score;
         };
-    },
-
-    getSpareBonus = function (scores, index) {
-
-    },
-
-    getStrikeBonus = function (scores, index) {
-        var calc = createCalculator(scores);
-
-        return calc(scores[index + 1], index + 1) + calc(scores[index + 2], index + 2);
     },
 
     toScoreTotal = function (previousScore, currentScore) {
@@ -47,22 +64,32 @@ var scores = process.argv[2] || null,
 
         // empty scores '-' are worth 0 and have no need for any special behaviour.
         if (isNull(score)) {
-            score = 0;
+            parsedInt = 0;
 
         } else {
-            score = parseInt(score, 10);
+            parsedInt = parseInt(score, 10);
         }
 
         return isNaN(parsedInt) ? score : parsedInt;
     },
 
+    outPreSpareScores = function (score, index) {
+        // you can only have a spare as the second shot of a turn
+        if ((index + 1) % 2 === 1 && isSpare(scores[index + 1])) {
+            return false;
+        }
+
+        return score;
+    },
+
     calculateScores = function (scores) {
-        var scoreParts = scores.split(''),
-            calculateScore = createCalculator(scores);
+        var scoreParts     = scores.split(''),
+            calculateScore = createCalculator(scoreParts);
 
         return scoreParts
             .map(toIntegerIfPossible)
             .map(calculateScore)
+            .filter(outPreSpareScores(scores))
             .reduce(toScoreTotal, 0);
     };
 

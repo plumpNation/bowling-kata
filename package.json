@@ -1,11 +1,15 @@
 {
-  "name": "bowling",
+  "name": "bowling-kata",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "MIT"
+  "repository": "https://github.com/plumpNation/bowling-kata.git",
+  "author": "Gavin King <plumpnation@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^3.3.0"
+  }
 }
